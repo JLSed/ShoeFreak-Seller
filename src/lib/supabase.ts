@@ -62,3 +62,20 @@ export async function registerUser(
   }
   return { response: true, data: data };
 }
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(error.message);
+  }
+  return true;
+}
+
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) return { response: false, message: error.message };
+  return { response: true, data };
+}

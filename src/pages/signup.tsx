@@ -31,7 +31,6 @@ function Signup() {
       );
       if (response && response.response) {
         alert("Signup successful! Please log in.");
-        navigate("/login");
       }
     } catch (error: any) {
       alert(error.message || "Signup failed");
@@ -133,7 +132,7 @@ function Signup() {
         <p className="text-sm text-gray-500 mt-4">
           ALready have an Account?{" "}
           <span
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/")}
             className="text-green-500 cursor-pointer"
           >
             Log In

@@ -7,6 +7,8 @@ export default {
         outfit: ["Outfit"],
         poppins: ["Poppins"],
         monstserrat: ["Montserrat"],
+        gochi_hand: ["Gochi Hand"],
+        rock_salt: ["Rock Salt"],
       },
     },
   },
