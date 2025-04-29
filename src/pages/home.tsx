@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+import { GiRunningShoe } from "react-icons/gi";
 import Header from "../components/header";
+import { fetchSneakers } from "../lib/supabase";
 
 function Home() {
   // for demonstration
@@ -25,6 +28,23 @@ function Home() {
     },
   ];
 
+  const [sneakers, setSneakers] = useState<any[]>([]);
+  const [loadingSneakers, setLoadingSneakers] = useState(true);
+
+  useEffect(() => {
+    const getSneakers = async () => {
+      setLoadingSneakers(true);
+      try {
+        const data = await fetchSneakers();
+        setSneakers(data || []);
+      } catch {
+        setSneakers([]);
+      }
+      setLoadingSneakers(false);
+    };
+    getSneakers();
+  }, []);
+
   return (
     <div className="bg-green-900 min-h-screen">
       <Header />
@@ -47,10 +67,94 @@ function Home() {
             </div>
           ))}
         </div>
-        <div className="bg-gray-100 rounded-lg mt-12 p-4 shadow-lg">
-          <span className="text-sm text-gray-600 text-center border-b-2 w-full font-poppins pb-2 border-gray-300">
-            Shoe Listing
+        <div className="bg-gray-100 rounded-lg mt-12 py-4 shadow-lg">
+          <span className=" text-gray-600 text-center flex gap-2 border-b-2 w-full font-poppins pb-2 px-4 border-gray-300">
+            <GiRunningShoe className="text-2xl" />
+            Your Sneakers
           </span>
+          <div className="flex gap-8 overflow-x-auto px-4 py-4">
+            {loadingSneakers ? (
+              <p className="text-gray-500">Loading sneakers...</p>
+            ) : sneakers.length === 0 ? (
+              <p className="text-gray-500">No sneakers found.</p>
+            ) : (
+              sneakers.map((shoe) => {
+                // Parse color and size JSON fields
+                let colors: string[] = [];
+                let sizes: string[] = [];
+                try {
+                  colors = shoe.color ? shoe.color : [];
+                  console.log(colors);
+                } catch {
+                  colors = [];
+                }
+                try {
+                  sizes = shoe.size ? shoe.size : [];
+                } catch {
+                  sizes = [];
+                }
+                return (
+                  <div
+                    className="shadow rounded-lg bg-white min-w-[200px] max-w-[220px] flex flex-col items-center p-4"
+                    key={shoe.shoe_id}
+                  >
+                    <div className="w-32 h-32 flex items-center justify-center bg-gray-200 rounded-lg mb-2 overflow-hidden">
+                      <img
+                        src={shoe.image_url || "/placeholder-shoe.png"}
+                        alt={shoe.shoe_name}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div className="w-full text-center">
+                      <p className="font-semibold">
+                        {shoe.shoe_name || "Shoe Name"}
+                      </p>
+                      <p className="text-green-700 font-bold">
+                        {shoe.price ? `₱${shoe.price}` : "Price"}
+                      </p>
+                      <div className="mt-2">
+                        <span className="text-xs text-gray-500">Colors: </span>
+                        {colors.length > 0 ? (
+                          <span className="flex flex-wrap justify-center gap-1">
+                            {colors.map((color: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="inline-block w-4 h-4 rounded-full border border-black"
+                                style={{ backgroundColor: color }}
+                                title={color}
+                              ></span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">N/A</span>
+                        )}
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-xs text-gray-500">Sizes: </span>
+                        {sizes.length > 0 ? (
+                          <span className="flex flex-wrap justify-center gap-1">
+                            {sizes.map((size: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="inline-block bg-gray-200 rounded px-2 py-0.5 text-xs"
+                              >
+                                {size}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">N/A</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+        <div>
+          <p>Pending Order</p>
         </div>
       </main>
     </div>

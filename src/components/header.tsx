@@ -9,10 +9,10 @@ import { signOut } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 const navItems = [
-  { label: "Dashboard", icon: <MdSpaceDashboard /> },
-  { label: "Shoe List", icon: <GiRunningShoe /> },
-  { label: "Customers", icon: <IoMdPerson /> },
-  { label: "Marketplace", icon: <FaStore /> },
+  { label: "Dashboard", icon: <MdSpaceDashboard />, link: "/home" },
+  { label: "Shoe List", icon: <GiRunningShoe />, link: "/marketplace" },
+  { label: "Customers", icon: <IoMdPerson />, link: "/messages" },
+  { label: "Marketplace", icon: <FaStore />, link: "/marketplace" },
 ];
 
 function Header() {
@@ -47,7 +47,11 @@ function Header() {
       </div>
       <div className="font-gochi_hand text-xl text-green-900 flex gap-4">
         {navItems.map((item) => (
-          <button className="flex items-center gap-1" key={item.label}>
+          <button
+            onClick={() => navigate(item.link)}
+            className="flex items-center gap-1"
+            key={item.label}
+          >
             {item.icon}
             {item.label}
           </button>
