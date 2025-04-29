@@ -67,8 +67,8 @@ function Customer() {
         "SELLER"
       );
       if (response.error) {
-        console.log(response.error);
-      } else if (response.data && Array.isArray(response.data)) {
+        console.error("Error sending message:", response.error);
+      } else if (response.data && response.data.length > 0) {
         setMessages((prev) => [...prev, response.data[0]]);
       }
       setNewMessage("");

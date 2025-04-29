@@ -98,7 +98,7 @@ export async function sendMessage(
   customerId: string,
   message: string,
   sender: "SELLER" | "CUSTOMER"
-) {
+): Promise<{ data: any[]; error: any }> {
   const { data, error } = await supabase.from("messages").insert([
     {
       seller_id: sellerId,
@@ -107,9 +107,5 @@ export async function sendMessage(
       sender: sender,
     },
   ]);
-  if (error) {
-    console.log(data, error);
-    return { error: error.message };
-  }
-  return { data: data };
+  return { data: data || [], error };
 }
