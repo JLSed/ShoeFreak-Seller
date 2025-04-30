@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 const navItems = [
   { label: "Dashboard", icon: <MdSpaceDashboard />, link: "/home" },
-  { label: "Shoe List", icon: <GiRunningShoe />, link: "/marketplace" },
+  { label: "Shoe List", icon: <GiRunningShoe />, link: "/shoe-list" },
   { label: "Customers", icon: <IoMdPerson />, link: "/messages" },
   { label: "Marketplace", icon: <FaStore />, link: "/marketplace" },
 ];

@@ -34,14 +34,18 @@ function Customer() {
   useEffect(() => {
     const loadCustomers = async () => {
       try {
-        const data = await fetchCustomers();
+        if (!sellerId) return; // Don't fetch if we don't have sellerId
+        const data = await fetchCustomers(sellerId);
         setCustomers(data || []);
       } catch (error) {
         console.error("Error fetching customers:", error);
       }
     };
-    loadCustomers();
-  }, []);
+
+    if (sellerId) {
+      loadCustomers();
+    }
+  }, [sellerId]);
 
   const loadMessages = async (customerId: string) => {
     setLoadingMessages(true);
@@ -162,7 +166,13 @@ function Customer() {
                   ))
                 )}
               </div>
-              <div className="mt-4 flex">
+              <div className="mt-4 flex gap-4">
+                <button
+                  className="bg-gray-200 text-black px-4 py-2 rounded-lg"
+                  onClick={handleSendMessage}
+                >
+                  Send Custom Request
+                </button>
                 <input
                   type="text"
                   placeholder="Type a message..."
@@ -171,7 +181,7 @@ function Customer() {
                   onChange={(e) => setNewMessage(e.target.value)}
                 />
                 <button
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg ml-2"
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg"
                   onClick={handleSendMessage}
                 >
                   Send
