@@ -65,9 +65,10 @@ function Customer() {
           sellerId,
           selectedCustomer.user_id
         );
-        setMessages(messagesData || []);
-        // Scroll to bottom after messages load
-        setTimeout(scrollToBottom, 100);
+        setMessages(() => {
+          setTimeout(scrollToBottom, 100);
+          return messagesData || [];
+        });
       } catch (error) {
         console.error("Error fetching messages:", error);
       } finally {
@@ -86,7 +87,10 @@ function Customer() {
         "postgres_changes",
         { event: "*", schema: "public", table: "messages" },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
+          setMessages((prev) => {
+            setTimeout(scrollToBottom, 100);
+            return [...prev, payload.new];
+          });
         }
       )
       .subscribe();
