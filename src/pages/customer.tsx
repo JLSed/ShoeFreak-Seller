@@ -24,6 +24,7 @@ function Customer() {
 
   // Scroll to bottom of chat
   const scrollToBottom = () => {
+    console.log("hsdf");
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
@@ -79,39 +80,21 @@ function Customer() {
 
   // Real-time message subscription
   useEffect(() => {
-    if (!sellerId || !selectedCustomer?.user_id) return;
-
-    console.log("Setting up real-time subscription for:", {
-      sellerId,
-      customerId: selectedCustomer.user_id,
-    });
-
     const channel = supabase
-      .channel("chat")
+      .channel("realitime messages")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `seller_id=eq.${sellerId}&customer_id=eq.${selectedCustomer.user_id}`,
-        },
+        { event: "*", schema: "public", table: "messages" },
         (payload) => {
-          console.log("New message received:", payload);
           setMessages((prev) => [...prev, payload.new]);
-          setTimeout(scrollToBottom, 100);
         }
       )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-      });
+      .subscribe();
 
-    // Cleanup subscription on unmount or when customer/seller changes
     return () => {
-      console.log("Cleaning up subscription");
       supabase.removeChannel(channel);
     };
-  }, [sellerId, selectedCustomer]);
+  }, [selectedCustomer, sellerId]);
 
   // Handle sending message
   const handleSendMessage = async (e: React.FormEvent) => {

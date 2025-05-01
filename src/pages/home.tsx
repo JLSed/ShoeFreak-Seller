@@ -48,7 +48,6 @@ function Home() {
       try {
         // Fetch seller's sneakers
         const sneakersData = await fetchSellerSneakers(currentUser.id);
-        console.log(sneakersData);
         setSneakers(sneakersData || []);
 
         // Fetch seller's statistics
