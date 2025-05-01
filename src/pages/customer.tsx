@@ -1,195 +1,253 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../components/header";
 import {
-  supabase,
-  fetchCustomers,
+  getCurrentUser,
+  fetchCustomersWithChat,
   fetchMessages,
   sendMessage,
+  supabase,
 } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 function Customer() {
+  const navigate = useNavigate();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loading, setLoading] = useState({
+    customers: true,
+    messages: false,
+  });
   const [sellerId, setSellerId] = useState<string | null>(null);
 
-  // Fetch the current seller's ID
-  useEffect(() => {
-    const fetchSellerId = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching seller ID:", error);
-      } else {
-        setSellerId(user?.id || null);
-      }
-    };
-    fetchSellerId();
-  }, []);
-
-  useEffect(() => {
-    const loadCustomers = async () => {
-      try {
-        if (!sellerId) return; // Don't fetch if we don't have sellerId
-        const data = await fetchCustomers(sellerId);
-        setCustomers(data || []);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-    };
-
-    if (sellerId) {
-      loadCustomers();
+  // Scroll to bottom of chat
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
-  }, [sellerId]);
-
-  const loadMessages = async (customerId: string) => {
-    setLoadingMessages(true);
-    try {
-      if (!sellerId) throw new Error("Seller ID is undefined");
-      const data = await fetchMessages(sellerId, customerId);
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-    setLoadingMessages(false);
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+  // Initialize seller and load customers
+  useEffect(() => {
+    const initialize = async () => {
+      const user = await getCurrentUser();
+      if (!user) {
+        navigate("/");
+        return;
+      }
+      setSellerId(user.id);
+
+      try {
+        const customersData = await fetchCustomersWithChat(user.id);
+        setCustomers(customersData || []);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      } finally {
+        setLoading((prev) => ({ ...prev, customers: false }));
+      }
+    };
+
+    initialize();
+  }, [navigate]);
+
+  // Load messages when customer is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!sellerId || !selectedCustomer?.user_id) return;
+
+      setLoading((prev) => ({ ...prev, messages: true }));
+      try {
+        const messagesData = await fetchMessages(
+          sellerId,
+          selectedCustomer.user_id
+        );
+        setMessages(messagesData || []);
+        // Scroll to bottom after messages load
+        setTimeout(scrollToBottom, 100);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      } finally {
+        setLoading((prev) => ({ ...prev, messages: false }));
+      }
+    };
+
+    loadMessages();
+  }, [sellerId, selectedCustomer]);
+
+  // Real-time message subscription
+  useEffect(() => {
+    if (!sellerId || !selectedCustomer?.user_id) return;
+
+    console.log("Setting up real-time subscription for:", {
+      sellerId,
+      customerId: selectedCustomer.user_id,
+    });
+
+    const channel = supabase
+      .channel("chat")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `seller_id=eq.${sellerId}&customer_id=eq.${selectedCustomer.user_id}`,
+        },
+        (payload) => {
+          console.log("New message received:", payload);
+          setMessages((prev) => [...prev, payload.new]);
+          setTimeout(scrollToBottom, 100);
+        }
+      )
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
+
+    // Cleanup subscription on unmount or when customer/seller changes
+    return () => {
+      console.log("Cleaning up subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [sellerId, selectedCustomer]);
+
+  // Handle sending message
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !sellerId || !selectedCustomer?.user_id) return;
+
     try {
-      if (!sellerId || !selectedCustomer?.user_id)
-        throw new Error("Invalid IDs");
       const response = await sendMessage(
         sellerId,
         selectedCustomer.user_id,
-        newMessage,
+        newMessage.trim(),
         "SELLER"
       );
+
       if (response.error) {
         console.error("Error sending message:", response.error);
-      } else if (response.data && response.data.length > 0) {
-        setMessages((prev) => [...prev, response.data[0]]);
+        return;
       }
+
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
 
-  const handleCustomerClick = (customer: any) => {
-    setSelectedCustomer(customer);
-    loadMessages(customer.user_id);
-  };
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("realitime messages")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
-        (payload) => {
-          console.log(payload);
-          setMessages((prev) => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedCustomer, sellerId]);
-
   return (
     <div className="bg-green-900 min-h-screen">
       <Header />
-      <main className="pt-20 px-4 flex">
+      <main className="pt-20 px-4 flex gap-4 h-[calc(100vh-5rem)]">
         {/* Customer List */}
-        <aside className="bg-gray-100 p-4 rounded-lg shadow-lg w-64">
+        <aside className="bg-gray-100 p-4 rounded-lg shadow-lg w-80">
           <h2 className="text-lg font-semibold text-green-900 mb-4">
             Customers
           </h2>
-          <ul className="space-y-2">
-            {customers.map((customer) => (
-              <li
-                key={customer.id}
-                className={`p-2 rounded-lg cursor-pointer ${
-                  selectedCustomer?.id === customer.id
-                    ? "bg-green-600 text-white"
-                    : "hover:bg-gray-200"
-                }`}
-                onClick={() => handleCustomerClick(customer)}
-              >
-                {customer.first_name} {customer.last_name}
-              </li>
-            ))}
-          </ul>
+          {loading.customers ? (
+            <p className="text-gray-500">Loading customers...</p>
+          ) : customers.length === 0 ? (
+            <p className="text-gray-500">No chat history yet.</p>
+          ) : (
+            <ul className="space-y-2 overflow-y-auto max-h-[calc(100vh-12rem)]">
+              {customers.map((customer) => (
+                <li
+                  key={customer.user_id}
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedCustomer?.user_id === customer.user_id
+                      ? "bg-green-600 text-white"
+                      : "hover:bg-gray-200"
+                  }`}
+                  onClick={() => setSelectedCustomer(customer)}
+                >
+                  <div className="font-medium">
+                    {customer.first_name} {customer.last_name}
+                  </div>
+                  <div className="text-sm opacity-75">{customer.email}</div>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
 
-        {/* Messages Section */}
-        <div className="flex-1 bg-gray-100 p-4 rounded-lg shadow-lg ml-4">
+        {/* Chat Section */}
+        <div className="flex-1 bg-gray-100 rounded-lg shadow-lg overflow-hidden flex flex-col">
           {selectedCustomer ? (
             <>
-              <h2 className="text-lg font-semibold text-green-900 mb-4">
-                Messages with {selectedCustomer.first_name}{" "}
-                {selectedCustomer.last_name}
-              </h2>
-              <div className="h-96 overflow-y-auto border rounded-lg p-4 bg-white">
-                {loadingMessages ? (
-                  <p className="text-gray-500">Loading messages...</p>
+              {/* Chat Header */}
+              <div className="p-4 bg-white border-b">
+                <h2 className="text-lg font-semibold text-green-900">
+                  {selectedCustomer.first_name} {selectedCustomer.last_name}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {selectedCustomer.email}
+                </p>
+              </div>
+
+              {/* Messages */}
+              <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto p-4 space-y-4"
+              >
+                {loading.messages ? (
+                  <p className="text-center text-gray-500">
+                    Loading messages...
+                  </p>
                 ) : messages.length === 0 ? (
-                  <p className="text-gray-500">No messages yet.</p>
+                  <p className="text-center text-gray-500">No messages yet.</p>
                 ) : (
-                  messages.map((msg, idx) => (
+                  messages.map((msg) => (
                     <div
-                      key={idx}
-                      className={`mb-2 ${
+                      key={msg.id}
+                      className={`flex ${
                         msg.sender === "SELLER"
-                          ? "text-right"
-                          : "text-left text-green-900"
+                          ? "justify-end"
+                          : "justify-start"
                       }`}
                     >
-                      <p
-                        className={`inline-block px-4 py-2 rounded-lg ${
+                      <div
+                        className={`max-w-[70%] px-4 py-2 rounded-lg ${
                           msg.sender === "SELLER"
                             ? "bg-green-600 text-white"
-                            : "bg-gray-200"
+                            : "bg-white border"
                         }`}
                       >
                         {msg.message}
-                      </p>
+                      </div>
                     </div>
                   ))
                 )}
               </div>
-              <div className="mt-4 flex gap-4">
-                <button
-                  className="bg-gray-200 text-black px-4 py-2 rounded-lg"
-                  onClick={handleSendMessage}
-                >
-                  Send Custom Request
-                </button>
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 border rounded-lg p-2"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <button
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg"
-                  onClick={handleSendMessage}
-                >
-                  Send
-                </button>
-              </div>
+
+              {/* Message Input */}
+              <form
+                onSubmit={handleSendMessage}
+                className="p-4 bg-white border-t"
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1 rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newMessage.trim()}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Send
+                  </button>
+                </div>
+              </form>
             </>
           ) : (
-            <p className="text-gray-500">Select a customer to view messages.</p>
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Select a customer to start chatting
+            </div>
           )}
         </div>
       </main>

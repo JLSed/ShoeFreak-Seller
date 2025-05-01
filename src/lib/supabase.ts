@@ -142,6 +142,32 @@ export async function fetchCustomers(sellerId: string) {
   return data || [];
 }
 
+// Fetch customers who have messaged the current seller
+export async function fetchCustomersWithChat(sellerId: string) {
+  // First get all unique customer IDs from messages
+  const { data: messageData, error: messageError } = await supabase
+    .from("messages")
+    .select("customer_id")
+    .eq("seller_id", sellerId);
+
+  if (messageError) throw messageError;
+
+  const customerIds = messageData.map((msg) => msg.customer_id);
+
+  if (customerIds.length === 0) return [];
+
+  // Then fetch customer details
+  const { data: customers, error: customerError } = await supabase
+    .from("Users")
+    .select("user_id, first_name, last_name, email")
+    .in("user_id", customerIds)
+    .eq("type", "CUSTOMER");
+
+  if (customerError) throw customerError;
+
+  return customers;
+}
+
 // Fetch messages between a seller and a customer
 export async function fetchMessages(sellerId: string, customerId: string) {
   const { data, error } = await supabase
@@ -150,7 +176,8 @@ export async function fetchMessages(sellerId: string, customerId: string) {
     .eq("seller_id", sellerId)
     .eq("customer_id", customerId)
     .order("created_at", { ascending: true });
-  if (error) throw new Error(error.message);
+
+  if (error) throw error;
   return data;
 }
 
@@ -160,16 +187,22 @@ export async function sendMessage(
   customerId: string,
   message: string,
   sender: "SELLER" | "CUSTOMER"
-): Promise<{ data: any[]; error: any }> {
-  const { data, error } = await supabase.from("messages").insert([
-    {
-      seller_id: sellerId,
-      customer_id: customerId,
-      message: message,
-      sender: sender,
-    },
-  ]);
-  return { data: data || [], error };
+) {
+  const { data, error } = await supabase
+    .from("messages")
+    .insert([
+      {
+        seller_id: sellerId,
+        customer_id: customerId,
+        message,
+        sender,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) return { error };
+  return { data };
 }
 
 interface PublishSneakerParams {
