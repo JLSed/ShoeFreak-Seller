@@ -71,7 +71,7 @@ function PublishSneaker() {
         brand: formData.brand,
         category: formData.category,
         description: formData.description,
-        price: parseInt(formData.price),
+        price: parseFloat(formData.price),
         colors: formData.colors.filter(Boolean),
         sizes: formData.sizes.filter(Boolean),
       });

@@ -89,7 +89,7 @@ function ShoeDetails() {
         <div className="max-w-4xl mx-auto">
           {/* Back button */}
           <button
-            onClick={() => navigate("/shoe-list")}
+            onClick={() => navigate(-1)}
             className="mb-4 flex items-center gap-2 text-white hover:text-gray-200"
           >
             <svg
@@ -104,7 +104,7 @@ function ShoeDetails() {
                 clipRule="evenodd"
               />
             </svg>
-            Back to Shoe List
+            Back
           </button>
 
           <div className="bg-white rounded-lg shadow-lg p-6">

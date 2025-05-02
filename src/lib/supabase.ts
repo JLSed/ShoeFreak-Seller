@@ -64,18 +64,11 @@ export async function signIn(email: string, password: string) {
 export async function fetchSneakers() {
   const { data, error } = await supabase
     .from("Shoes")
-    .select(
-      `
-      *,
-      publisher:published_by(
-        user_id,
-        first_name,
-        last_name
-      )
-    `
-    )
+    .select("*")
+    .eq("status", "AVAILABLE")
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+
+  if (error) throw error;
   return data;
 }
 
@@ -344,6 +337,96 @@ export async function getSellerStats(sellerId: string) {
   }
 }
 
+interface SaleItem {
+  shoe: {
+    price: number;
+    published_by: string;
+  };
+}
+
+// Get seller's sales statistics
+export async function getSellerSalesStats(sellerId: string) {
+  try {
+    // Get today's start and end timestamps
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Get month's start and end timestamps
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
+
+    // Fetch today's sales with type
+    const { data: todaySales, error: todayError } = await supabase
+      .from("checkouts")
+      .select(
+        `
+        *,
+        shoe:Shoes!inner(
+          price,
+          published_by
+        )
+      `
+      )
+      .eq("status", "SENDING")
+      .eq("shoe.published_by", sellerId)
+      .gte("created_at", today.toISOString())
+      .lt("created_at", tomorrow.toISOString());
+
+    if (todayError) throw todayError;
+
+    // Fetch month's sales with type
+    const { data: monthSales, error: monthError } = await supabase
+      .from("checkouts")
+      .select(
+        `
+        *,
+        shoe:Shoes!inner(
+          price,
+          published_by
+        )
+      `
+      )
+      .eq("status", "SENDING")
+      .eq("shoe.published_by", sellerId)
+      .gte("created_at", monthStart.toISOString())
+      .lte("created_at", monthEnd.toISOString());
+
+    if (monthError) throw monthError;
+
+    // Calculate totals with proper typing
+    const todayTotal =
+      todaySales?.reduce(
+        (sum, item: SaleItem) => sum + (item.shoe.price || 0),
+        0
+      ) || 0;
+    const monthTotal =
+      monthSales?.reduce(
+        (sum, item: SaleItem) => sum + (item.shoe.price || 0),
+        0
+      ) || 0;
+
+    return {
+      todaySales: todayTotal,
+      monthSales: monthTotal,
+    };
+  } catch (error) {
+    console.error("Error getting sales stats:", error);
+    return {
+      todaySales: 0,
+      monthSales: 0,
+    };
+  }
+}
+
 // Fetch a single sneaker by ID
 export async function fetchSneaker(shoeId: string) {
   const { data, error } = await supabase
@@ -398,5 +481,118 @@ export async function updateSneaker(
   } catch (error) {
     console.error("Error updating sneaker:", error);
     return { error: "Failed to update sneaker" };
+  }
+}
+
+// Fetch pending orders for the current seller
+export async function fetchPendingOrders(sellerId: string) {
+  const { data, error } = await supabase
+    .from("checkouts")
+    .select(
+      `
+      *,
+      shoe:Shoes!inner(
+        shoe_id,
+        shoe_name,
+        brand,
+        color,
+        size,
+        price,
+        image_url,
+        published_by
+      ),
+      buyer:Users!buyer_id(
+        user_id,
+        first_name,
+        last_name,
+        email
+      )
+    `
+    )
+    .eq("status", "PENDING")
+    .eq("shoe.published_by", sellerId);
+
+  if (error) throw error;
+  console.log(data);
+  return data || [];
+}
+
+export async function fetchOrder(orderId: string) {
+  const { data, error } = await supabase
+    .from("checkouts")
+    .select(
+      `
+      *,
+      shoe:Shoes!inner(
+        shoe_id,
+        shoe_name,
+        brand,
+        color,
+        size,
+        price,
+        image_url,
+        published_by
+      ),
+      buyer:Users!buyer_id(
+        user_id,
+        first_name,
+        last_name,
+        email,
+        contact_number,
+        address
+      )
+    `
+    )
+    .eq("checkout_id", orderId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Complete an order
+export async function completeOrder(orderId: string, shoeId: string) {
+  try {
+    // Start a transaction to update both tables
+    const { data: checkoutData, error: checkoutError } = await supabase
+      .from("checkouts")
+      .update({ status: "SENDING" })
+      .eq("checkout_id", orderId)
+      .select()
+      .single();
+
+    if (checkoutError) throw checkoutError;
+
+    const { data: shoeData, error: shoeError } = await supabase
+      .from("Shoes")
+      .update({ status: "SOLD" })
+      .eq("shoe_id", shoeId)
+      .select()
+      .single();
+
+    if (shoeError) throw shoeError;
+
+    return { checkoutData, shoeData };
+  } catch (error) {
+    console.error("Error completing order:", error);
+    return { error: "Failed to complete order" };
+  }
+}
+
+// Cancel an order
+export async function cancelOrder(orderId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("checkouts")
+      .update({ status: "CANCELLED" })
+      .eq("checkout_id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data };
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    return { error: "Failed to cancel order" };
   }
 }

@@ -8,6 +8,7 @@ import Customer from "./pages/customer";
 import PublishSneaker from "./pages/publish-sneaker";
 import ShoeList from "./pages/shoe-list";
 import ShoeDetails from "./pages/shoe-details";
+import OrderDetails from "./pages/order-details";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/publish-sneaker" element={<PublishSneaker />} />
         <Route path="/shoe-list" element={<ShoeList />} />
         <Route path="/shoe/:id" element={<ShoeDetails />} />
+        <Route path="/order/:id" element={<OrderDetails />} />
       </Routes>
     </BrowserRouter>
   );

@@ -22,10 +22,16 @@ function Marketplace() {
   }, []);
 
   const filteredSneakers = sneakers.filter((shoe) => {
+    // Only show available shoes and apply filters
     const matchesColor =
-      !filter.color || (shoe.color && shoe.color.includes(filter.color));
+      !filter.color ||
+      (shoe.color &&
+        shoe.color.some((c: string) =>
+          c.toLowerCase().includes(filter.color.toLowerCase())
+        ));
     const matchesSize =
       !filter.size || (shoe.size && shoe.size.includes(filter.size));
+
     return matchesColor && matchesSize;
   });
 
@@ -110,7 +116,7 @@ function Marketplace() {
                           {shoe.shoe_name || "Shoe Name"}
                         </p>
                         <p className="text-green-700 font-bold">
-                          {shoe.price ? `₱${shoe.price}` : "Price"}
+                          {shoe.price ? `₱${shoe.price.toFixed(2)}` : "Price"}
                         </p>
                         <div className="mt-2">
                           <span className="text-xs text-gray-500">
