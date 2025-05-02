@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, publishSneaker } from "../lib/supabase";
 import Header from "../components/header";
+import { IoIosArrowBack } from "react-icons/io";
 
 function PublishSneaker() {
   const navigate = useNavigate();
@@ -93,6 +94,13 @@ function PublishSneaker() {
     <div className="bg-green-900 min-h-screen">
       <Header />
       <main className="pt-20 px-4">
+        <div
+          className="flex gap-2 items-center text-2xl font-poppins text-white cursor-pointer"
+          onClick={() => navigate(-1)}
+        >
+          <IoIosArrowBack className="text-3xl" />
+          <p>Go Back</p>
+        </div>
         <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-2xl font-semibold mb-6">Publish New Sneaker</h1>
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/header";
 import { fetchSellerSneakers, getCurrentUser } from "../lib/supabase";
+import { GiRunningShoe } from "react-icons/gi";
 
 interface FilterOptions {
   status: "ALL" | "AVAILABLE" | "PENDING" | "SOLD";
@@ -184,6 +185,18 @@ function ShoeList() {
               >
                 Clear Filters
               </button>
+            </div>
+            <div
+              onClick={() => navigate("/publish-sneaker")}
+              className="shadow rounded-lg bg-white min-w-[200px] max-w-[220px] flex flex-col items-center p-4 cursor-pointer hover:shadow-xl transition-shadow mt-12"
+            >
+              <div className="w-32 h-32 flex items-center justify-center bg-gray-200 rounded-lg mb-2">
+                <GiRunningShoe className="text-4xl text-gray-400" />
+              </div>
+              <p className="font-semibold text-gray-600">
+                Publish your own sneaker
+              </p>
+              <p className="text-sm text-gray-400">Click to get started</p>
             </div>
           </aside>
 
