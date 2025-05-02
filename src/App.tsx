@@ -9,6 +9,7 @@ import PublishSneaker from "./pages/publish-sneaker";
 import ShoeList from "./pages/shoe-list";
 import ShoeDetails from "./pages/shoe-details";
 import OrderDetails from "./pages/order-details";
+import AccountVerifiedPage from "./pages/account-verified-page";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/shoe-list" element={<ShoeList />} />
         <Route path="/shoe/:id" element={<ShoeDetails />} />
         <Route path="/order/:id" element={<OrderDetails />} />
+        <Route path="/account-verify" element={<AccountVerifiedPage />} />
       </Routes>
     </BrowserRouter>
   );
