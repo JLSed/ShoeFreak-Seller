@@ -1,9 +1,4 @@
 import { Routes, Route, BrowserRouter } from "react-router-dom";
-import {
-  AuthProvider,
-  RequireAuth,
-  PublicRoute,
-} from "./components/AuthProvider";
 
 import Login from "./pages/login";
 import Home from "./pages/home";
@@ -20,89 +15,21 @@ import NotFound from "./pages/not-found";
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public routes - accessible when not logged in */}
-          <Route
-            path="/"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <PublicRoute>
-                <Signup />
-              </PublicRoute>
-            }
-          />
-          <Route path="/account-verify" element={<AccountVerifiedPage />} />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/account-verify" element={<AccountVerifiedPage />} />
 
-          {/* Protected routes - require authentication & seller status */}
-          <Route
-            path="/home"
-            element={
-              <RequireAuth>
-                <Home />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/marketplace"
-            element={
-              <RequireAuth>
-                <Marketplace />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <RequireAuth>
-                <Customer />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/publish-sneaker"
-            element={
-              <RequireAuth>
-                <PublishSneaker />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/shoe-list"
-            element={
-              <RequireAuth>
-                <ShoeList />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/shoe/:id"
-            element={
-              <RequireAuth>
-                <ShoeDetails />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/order/:id"
-            element={
-              <RequireAuth>
-                <OrderDetails />
-              </RequireAuth>
-            }
-          />
+        <Route path="/home" element={<Home />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/messages" element={<Customer />} />
+        <Route path="/publish-sneaker" element={<PublishSneaker />} />
+        <Route path="/shoe-list" element={<ShoeList />} />
+        <Route path="/shoe/:id" element={<ShoeDetails />} />
+        <Route path="/order/:id" element={<OrderDetails />} />
 
-          {/* Catch-all route for 404 errors */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AuthProvider>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </BrowserRouter>
   );
 }
