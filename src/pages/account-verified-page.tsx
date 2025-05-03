@@ -1,9 +1,6 @@
-import { useNavigate } from "react-router-dom";
 import { FaCheckCircle } from "react-icons/fa";
 
 function AccountVerifiedPage() {
-  const navigate = useNavigate();
-
   return (
     <div className="bg-green-900 min-h-screen flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
@@ -20,12 +17,9 @@ function AccountVerifiedPage() {
           your email and password.
         </p>
 
-        <button
-          onClick={() => navigate("/")}
-          className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Proceed to Login
-        </button>
+        <div className="w-full px-4 py-3 bg-gray-300 text-black rounded-lg">
+          You can now exit to this tab
+        </div>
       </div>
     </div>
   );
