@@ -11,25 +11,28 @@ import ShoeDetails from "./pages/shoe-details";
 import OrderDetails from "./pages/order-details";
 import AccountVerifiedPage from "./pages/account-verified-page";
 import NotFound from "./pages/not-found";
+import AuthProvider from "./components/AuthProvider";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/account-verify" element={<AccountVerifiedPage />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/account-verify" element={<AccountVerifiedPage />} />
 
-        <Route path="/home" element={<Home />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/messages" element={<Customer />} />
-        <Route path="/publish-sneaker" element={<PublishSneaker />} />
-        <Route path="/shoe-list" element={<ShoeList />} />
-        <Route path="/shoe/:id" element={<ShoeDetails />} />
-        <Route path="/order/:id" element={<OrderDetails />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/messages" element={<Customer />} />
+          <Route path="/publish-sneaker" element={<PublishSneaker />} />
+          <Route path="/shoe-list" element={<ShoeList />} />
+          <Route path="/shoe/:id" element={<ShoeDetails />} />
+          <Route path="/order/:id" element={<OrderDetails />} />
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
