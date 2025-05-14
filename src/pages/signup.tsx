@@ -10,8 +10,25 @@ function Signup() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
+  const [contactNumberError, setContactNumberError] = useState("");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const validateContactNumber = (number: string) => {
+    const phoneRegex = /^(09|\+639)\d{9}$/;
+    if (!number) return "Contact number is required";
+    if (!phoneRegex.test(number))
+      return "Please enter a valid phone number (e.g., 09123456789)";
+    return "";
+  };
+
+  const handleContactNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setContactNumber(value);
+    setContactNumberError(validateContactNumber(value));
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +36,13 @@ function Signup() {
       alert("Passwords do not match!");
       return;
     }
+
+    const contactError = validateContactNumber(contactNumber);
+    if (contactError) {
+      setContactNumberError(contactError);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await signUp(
@@ -79,14 +103,23 @@ function Signup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <input
-              type="text"
-              placeholder="Ex. 09123456789"
-              className="mb-6 border rounded-lg p-2"
-              required
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-            />
+            <div className="flex flex-col">
+              <input
+                type="text"
+                placeholder="Ex. 09123456789"
+                className={`mb-1 border rounded-lg p-2 ${
+                  contactNumberError ? "border-red-500" : ""
+                }`}
+                required
+                value={contactNumber}
+                onChange={handleContactNumberChange}
+              />
+              {contactNumberError && (
+                <p className="text-red-500 text-xs mb-2">
+                  {contactNumberError}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex flex-col">
             <label className="text-sm text-gray-600">Address Location</label>
