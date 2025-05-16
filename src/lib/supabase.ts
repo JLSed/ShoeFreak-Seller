@@ -596,3 +596,297 @@ export async function cancelOrder(orderId: string) {
     return { error: "Failed to cancel order" };
   }
 }
+
+// Fetch all posts with user info and comment counts
+export async function fetchPosts() {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      `
+      *,
+      user:user_id (*),
+      comments:comments(count),
+      post_likes:post_likes(count)
+    `
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  // Transform the data to make likes_count a simple number
+  const transformedData = data?.map((post) => ({
+    ...post,
+    likes_count: post.post_likes?.[0]?.count || 0,
+    comments_count: post.comments?.[0]?.count || 0,
+  }));
+  console.log(transformedData);
+
+  return transformedData || [];
+}
+
+// Create a new post
+export async function createPost(
+  userId: string,
+  content: string,
+  imageFile?: File
+) {
+  try {
+    let imageUrl = null;
+
+    // Upload image if provided
+    if (imageFile) {
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `${Math.random()
+        .toString(36)
+        .substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `social_media/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("images").getPublicUrl(filePath);
+
+      imageUrl = publicUrl;
+    }
+
+    // Insert post into database
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([
+        {
+          user_id: userId,
+          content,
+          image_url: imageUrl,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data };
+  } catch (error) {
+    console.error("Error creating post:", error);
+    return { error: "Failed to create post" };
+  }
+}
+
+// Add a comment to a post
+export async function addComment(
+  postId: string,
+  userId: string,
+  content: string
+) {
+  const { data, error } = await supabase
+    .from("comments")
+    .insert([
+      {
+        post_id: postId,
+        user_id: userId,
+        content,
+      },
+    ])
+    .select();
+
+  if (error) throw error;
+  return data;
+}
+
+// Fetch comments for a post
+export async function fetchComments(postId: string) {
+  const { data, error } = await supabase
+    .from("comments")
+    .select(
+      `
+      *,
+      user:user_id (
+        user_id,
+        first_name,
+        last_name,
+        email
+      )
+    `
+    )
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export const likePost = async (postId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const userId = user.user.id;
+
+  // Check if the user already liked this post
+  const { data: existingLike } = await supabase
+    .from("post_likes")
+    .select("*")
+    .eq("post_id", postId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  // If already liked, don't do anything
+  if (existingLike) {
+    return; // Or remove the like to toggle
+  }
+
+  // Add the like to post_likes table
+  const { error } = await supabase
+    .from("post_likes")
+    .insert([{ post_id: postId, user_id: userId }]);
+
+  if (error) throw error;
+};
+
+export const getPostLikesCount = async (postId: string) => {
+  const { count, error } = await supabase
+    .from("post_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", postId);
+  console.log("count", count);
+  if (error) throw error;
+  return count || 0;
+};
+
+export const hasUserLikedPost = async (postId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return false;
+
+  const { data, error } = await supabase
+    .from("post_likes")
+    .select("id")
+    .eq("post_id", postId)
+    .eq("user_id", user.user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !!data;
+};
+
+export const unlikePost = async (postId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const userId = user.user.id;
+
+  const { error } = await supabase
+    .from("post_likes")
+    .delete()
+    .eq("post_id", postId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
+};
+
+// Fetch user profile
+export const fetchUserProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("Users")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// Update user profile
+export const updateUserProfile = async (profile: any) => {
+  const { error } = await supabase
+    .from("Users") // Make sure this matches your actual table name
+    .update({
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      bio: profile.bio,
+      photo_url: profile.photo_url, // Changed from avatar_url to photo_url
+      location: profile.location,
+      website: profile.website,
+      phone: profile.phone,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", profile.id); // Make sure this matches your primary key column name
+
+  if (error) throw error;
+  return true;
+};
+
+// Upload profile image
+export const uploadProfileImage = async (userId: string, file: File) => {
+  // Create a unique file name
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}_profile_${Math.random()
+    .toString(36)
+    .substring(2)}.${fileExt}`;
+  const filePath = `profile_images/${fileName}`;
+
+  // Upload the file
+  const { error: uploadError } = await supabase.storage
+    .from("images")
+    .upload(filePath, file);
+
+  if (uploadError) throw uploadError;
+
+  // Get the public URL
+  const { data } = supabase.storage.from("images").getPublicUrl(filePath);
+
+  return data.publicUrl; // This will be assigned to photo_url
+};
+
+// Delete post
+export const deletePost = async (postId: string) => {
+  // First remove any associated likes
+  await supabase.from("post_likes").delete().eq("post_id", postId);
+
+  // Then remove any comments
+  await supabase.from("comments").delete().eq("post_id", postId);
+
+  // Finally delete the post
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+  if (error) throw error;
+  return true;
+};
+
+/**
+ * Fetches all posts created by a specific user
+ * @param userId - The ID of the user whose posts should be fetched
+ * @returns An array of the user's posts with like and comment counts
+ */
+export const fetchUserPosts = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      `
+      *,
+      post_likes(count),
+      comments(count)
+    `
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching user posts:", error);
+    throw error;
+  }
+
+  // Transform data to get counts from nested structures
+  const transformedData = data.map((post) => ({
+    ...post,
+    likes_count: post.post_likes?.[0]?.count || 0,
+    comments_count: post.comments?.[0]?.count || 0,
+  }));
+
+  return transformedData;
+};

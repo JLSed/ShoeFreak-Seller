@@ -1,8 +1,8 @@
-import { MdSpaceDashboard } from "react-icons/md";
+import { MdSpaceDashboard, MdAccountCircle } from "react-icons/md";
 import logo from "../assets/react.svg";
 import { GiRunningShoe } from "react-icons/gi";
 import { IoIosLogOut, IoMdPerson } from "react-icons/io";
-import { FaStore } from "react-icons/fa";
+import { FaStore, FaUsers } from "react-icons/fa";
 import { RiNotification4Fill } from "react-icons/ri";
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "../lib/supabase";
@@ -13,6 +13,8 @@ const navItems = [
   { label: "Shoe List", icon: <GiRunningShoe />, link: "/shoe-list" },
   { label: "Customers", icon: <IoMdPerson />, link: "/messages" },
   { label: "Marketplace", icon: <FaStore />, link: "/marketplace" },
+  { label: "Social", icon: <FaUsers />, link: "/socialmedia" },
+  { label: "Profile", icon: <MdAccountCircle />, link: "/profile" }, // Add Profile link
 ];
 
 function Header() {
@@ -72,6 +74,13 @@ function Header() {
           </div>
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <button
+                className="flex items-center justify-between w-full text-left px-4 py-2 font-poppins text-green-700 hover:bg-gray-100"
+                onClick={() => navigate("/profile")}
+              >
+                View Profile
+                <MdAccountCircle className="text-xl " />
+              </button>
               <button
                 className="flex items-center justify-between w-full text-left px-4 py-2 font-poppins text-red-700 hover:bg-gray-100"
                 onClick={handleLogout}

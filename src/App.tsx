@@ -12,6 +12,8 @@ import OrderDetails from "./pages/order-details";
 import AccountVerifiedPage from "./pages/account-verified-page";
 import NotFound from "./pages/not-found";
 import AuthProvider from "./components/AuthProvider";
+import SocialMedia from "./pages/socialmedia";
+import Profile from "./pages/profile";
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
           <Route path="/shoe-list" element={<ShoeList />} />
           <Route path="/shoe/:id" element={<ShoeDetails />} />
           <Route path="/order/:id" element={<OrderDetails />} />
+          <Route path="/socialmedia" element={<SocialMedia />} />
+          <Route path="/profile" element={<Profile />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
