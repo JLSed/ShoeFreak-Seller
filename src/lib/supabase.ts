@@ -808,14 +808,11 @@ export const updateUserProfile = async (profile: any) => {
     .update({
       first_name: profile.first_name,
       last_name: profile.last_name,
-      bio: profile.bio,
       photo_url: profile.photo_url, // Changed from avatar_url to photo_url
       location: profile.location,
-      website: profile.website,
       phone: profile.phone,
-      updated_at: new Date().toISOString(),
     })
-    .eq("user_id", profile.id); // Make sure this matches your primary key column name
+    .eq("user_id", profile.user_id); // Make sure this matches your primary key column name
 
   if (error) throw error;
   return true;

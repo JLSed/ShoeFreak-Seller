@@ -1,11 +1,11 @@
 import { MdSpaceDashboard, MdAccountCircle } from "react-icons/md";
-import logo from "../assets/react.svg";
+import logo from "../assets/react.svg"; // Keep as fallback
 import { GiRunningShoe } from "react-icons/gi";
 import { IoIosLogOut, IoMdPerson } from "react-icons/io";
 import { FaStore, FaUsers } from "react-icons/fa";
 import { RiNotification4Fill } from "react-icons/ri";
 import { useState, useRef, useEffect } from "react";
-import { signOut } from "../lib/supabase";
+import { signOut, getCurrentUser, fetchUserProfile } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -14,13 +14,32 @@ const navItems = [
   { label: "Customers", icon: <IoMdPerson />, link: "/messages" },
   { label: "Marketplace", icon: <FaStore />, link: "/marketplace" },
   { label: "Social", icon: <FaUsers />, link: "/socialmedia" },
-  { label: "Profile", icon: <MdAccountCircle />, link: "/profile" }, // Add Profile link
 ];
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  // Fetch user profile picture
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const profile = await fetchUserProfile(user.id);
+          if (profile && profile.photo_url) {
+            setProfilePicture(profile.photo_url);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error);
+      }
+    };
+
+    fetchProfilePicture();
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -63,14 +82,22 @@ function Header() {
         <RiNotification4Fill className="text-2xl text-green-900" />
         <div className="relative">
           <div
-            className="w-10 h-10 rounded-full bg-black overflow-hidden flex items-center justify-center cursor-pointer"
+            className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center cursor-pointer"
             onClick={() => setMenuOpen((prev) => !prev)}
           >
-            <img
-              src={logo}
-              alt="profile picture"
-              className="object-cover w-full h-full"
-            />
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt="profile picture"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <img
+                src={logo}
+                alt="default profile"
+                className="object-cover w-8 h-8"
+              />
+            )}
           </div>
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">

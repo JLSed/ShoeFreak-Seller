@@ -17,11 +17,11 @@ import { FaRegComment, FaComment } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
 interface UserProfile {
-  id: string;
+  user_id: string;
   first_name?: string;
   last_name?: string;
   email?: string;
-  photo_url?: string; // Changed from avatar_url to photo_url
+  photo_url?: string;
   location?: string;
   phone?: string;
   created_at?: string;
@@ -35,7 +35,7 @@ interface Post {
   user?: {
     first_name?: string;
     last_name?: string;
-    photo_url?: string; // Changed from avatar_url to photo_url
+    photo_url?: string;
   };
   likes_count?: number;
   comments_count?: number;
@@ -120,15 +120,18 @@ function Profile() {
 
       // Upload profile image if changed
       if (profileImage) {
-        photoUrl = await uploadProfileImage(editedProfile.id, profileImage);
+        photoUrl = await uploadProfileImage(
+          editedProfile.user_id,
+          profileImage
+        );
       }
 
       // Update profile with new data
       const updatedProfile = {
         ...editedProfile,
-        photo_url: photoUrl, // Changed from avatar_url to photo_url
+        photo_url: photoUrl,
       };
-
+      console.log("Updated Profile:", updatedProfile);
       await updateUserProfile(updatedProfile);
       setUserProfile(updatedProfile);
       setIsEditing(false);
@@ -177,19 +180,7 @@ function Profile() {
           <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
             {/* Cover Photo Section */}
             <div className="h-48 bg-green-200 relative">
-              {isEditing && (
-                <div className="absolute bottom-4 right-4">
-                  <label className="bg-white p-2 rounded-full cursor-pointer shadow-md">
-                    <FiCamera className="text-green-700 text-xl" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleProfileImageChange}
-                    />
-                  </label>
-                </div>
-              )}
+              {isEditing && <div className="absolute bottom-4 right-4"></div>}
             </div>
 
             {/* Profile Info Section */}
@@ -197,9 +188,13 @@ function Profile() {
               {/* Profile Picture */}
               <div className="absolute -top-16 left-6">
                 <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-gray-300">
-                  {userProfile?.photo_url ? ( // Changed from avatar_url to photo_url
+                  {userProfile?.photo_url ? (
                     <img
-                      src={userProfile.photo_url} // Changed from avatar_url to photo_url
+                      src={
+                        profileImage
+                          ? URL.createObjectURL(profileImage)
+                          : userProfile.photo_url
+                      }
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
@@ -230,6 +225,15 @@ function Profile() {
                     >
                       Save Changes
                     </button>
+                    <label className="bg-white p-2 rounded-full cursor-pointer shadow-md">
+                      <FiCamera className="text-green-700 text-xl" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfileImageChange}
+                      />
+                    </label>
                   </div>
                 ) : (
                   <button
@@ -385,9 +389,9 @@ function Profile() {
                   <div className="p-4 flex justify-between items-start">
                     <div className="flex gap-3">
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300">
-                        {userProfile?.photo_url ? ( // Changed from avatar_url to photo_url
+                        {userProfile?.photo_url ? (
                           <img
-                            src={userProfile.photo_url} // Changed from avatar_url to photo_url
+                            src={userProfile.photo_url}
                             alt="Profile"
                             className="w-full h-full object-cover"
                           />
