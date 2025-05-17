@@ -208,8 +208,14 @@ interface PublishSneakerParams {
   price: number;
   colors: string[];
   sizes: string[];
+  materials: {
+    leather: boolean;
+    synthetic: boolean;
+    rubberFoam: boolean;
+    ecoFriendly: boolean;
+    other: boolean;
+  };
 }
-
 export async function publishSneaker({
   sellerId,
   imageFile,
@@ -220,6 +226,7 @@ export async function publishSneaker({
   price,
   colors,
   sizes,
+  materials,
 }: PublishSneakerParams) {
   try {
     // Generate a random file name for the image
@@ -253,6 +260,7 @@ export async function publishSneaker({
           price,
           color: colors,
           size: sizes,
+          material: materials,
           image_url: publicUrl,
           published_by: sellerId,
         },

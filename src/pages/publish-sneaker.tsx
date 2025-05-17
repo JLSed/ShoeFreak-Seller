@@ -17,6 +17,13 @@ function PublishSneaker() {
     price: "",
     colors: [""],
     sizes: [""],
+    materials: {
+      leather: false,
+      synthetic: false,
+      rubberFoam: false,
+      ecoFriendly: false,
+      other: false,
+    },
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -75,6 +82,7 @@ function PublishSneaker() {
         price: parseFloat(formData.price),
         colors: formData.colors.filter(Boolean),
         sizes: formData.sizes.filter(Boolean),
+        materials: formData.materials,
       });
 
       if (response.error) {
@@ -134,20 +142,154 @@ function PublishSneaker() {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Category
               </label>
-              <input
-                type="text"
+              <select
                 required
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
-              />
+              >
+                <option value="" disabled>
+                  Select a category
+                </option>
+                <option value="Casual">Casual</option>
+                <option value="Sports">Sports</option>
+                <option value="Formal">Formal</option>
+                <option value="Specialized">Specialized</option>
+                <option value="Boots">Boots</option>
+                <option value="Slippers/Sandals">Slippers/Sandals</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Material (Select all that apply)
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="material-leather"
+                    checked={formData.materials.leather}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          leather: e.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="material-leather"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Leather
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="material-synthetic"
+                    checked={formData.materials.synthetic}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          synthetic: e.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="material-synthetic"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Synthetic
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="material-rubber-foam"
+                    checked={formData.materials.rubberFoam}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          rubberFoam: e.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="material-rubber-foam"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Rubber & Foam
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="material-eco-friendly"
+                    checked={formData.materials.ecoFriendly}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          ecoFriendly: e.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="material-eco-friendly"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Specialty & Eco-Friendly
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="material-other"
+                    checked={formData.materials.other}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          other: e.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="material-other"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Other
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div>

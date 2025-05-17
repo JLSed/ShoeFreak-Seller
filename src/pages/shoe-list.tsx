@@ -4,22 +4,38 @@ import Header from "../components/header";
 import { fetchSellerSneakers, getCurrentUser } from "../lib/supabase";
 import { GiRunningShoe } from "react-icons/gi";
 
+// Update the FilterOptions interface to include material
 interface FilterOptions {
   status: "ALL" | "AVAILABLE" | "PENDING" | "SOLD";
   priceRange: { min: number; max: number } | null;
   brand: string;
   category: string;
+  materials: {
+    leather: boolean;
+    synthetic: boolean;
+    rubberFoam: boolean;
+    ecoFriendly: boolean;
+    other: boolean;
+  };
 }
 
 function ShoeList() {
   const navigate = useNavigate();
   const [sneakers, setSneakers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Update the initial state to include materials
   const [filters, setFilters] = useState<FilterOptions>({
     status: "ALL",
     priceRange: null,
     brand: "",
     category: "",
+    materials: {
+      leather: false,
+      synthetic: false,
+      rubberFoam: false,
+      ecoFriendly: false,
+      other: false,
+    },
   });
 
   useEffect(() => {
@@ -43,24 +59,45 @@ function ShoeList() {
     initializeData();
   }, [navigate]);
 
+  // Update the filtering logic to include materials
   const filteredSneakers = sneakers.filter((shoe) => {
+    // Status filter
     if (filters.status !== "ALL" && shoe.status !== filters.status)
       return false;
+
+    // Brand filter
     if (
       filters.brand &&
       !shoe.brand.toLowerCase().includes(filters.brand.toLowerCase())
     )
       return false;
-    if (
-      filters.category &&
-      !shoe.category.toLowerCase().includes(filters.category.toLowerCase())
-    )
-      return false;
+
+    // Category filter
+    if (filters.category && shoe.category !== filters.category) return false;
+
+    // Material filter
+    const materialSelected = Object.values(filters.materials).some(
+      (value) => value
+    );
+    if (materialSelected) {
+      // If no material data or no matches with selected materials
+      if (!shoe.material) return false;
+
+      // Check if any selected material matches the shoe's materials
+      const materialMatch = Object.entries(filters.materials).some(
+        ([key, isSelected]) => isSelected && shoe.material && shoe.material[key]
+      );
+
+      if (!materialMatch) return false;
+    }
+
+    // Price range filter
     if (filters.priceRange) {
       const price = Number(shoe.price);
       if (price < filters.priceRange.min || price > filters.priceRange.max)
         return false;
     }
+
     return true;
   });
 
@@ -85,6 +122,7 @@ function ShoeList() {
             <h2 className="text-lg font-semibold mb-4">Filters</h2>
 
             <div className="space-y-4">
+              {/* Status filter - unchanged */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status
@@ -106,6 +144,7 @@ function ShoeList() {
                 </select>
               </div>
 
+              {/* Brand filter - unchanged */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Brand
@@ -121,21 +160,162 @@ function ShoeList() {
                 />
               </div>
 
+              {/* Category filter - now a dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Category
                 </label>
-                <input
-                  type="text"
+                <select
                   className="w-full border rounded-md p-2"
                   value={filters.category}
                   onChange={(e) =>
                     setFilters({ ...filters, category: e.target.value })
                   }
-                  placeholder="Search categories..."
-                />
+                >
+                  <option value="">All Categories</option>
+                  <option value="Casual">Casual</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Formal">Formal</option>
+                  <option value="Specialized">Specialized</option>
+                  <option value="Boots">Boots</option>
+                  <option value="Slippers/Sandals">Slippers/Sandals</option>
+                </select>
               </div>
 
+              {/* NEW Material filter with checkboxes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Material
+                </label>
+                <div className="space-y-1">
+                  {/* Leather */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="material-leather"
+                      checked={filters.materials.leather}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          materials: {
+                            ...filters.materials,
+                            leather: e.target.checked,
+                          },
+                        })
+                      }
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="material-leather"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Leather
+                    </label>
+                  </div>
+
+                  {/* Synthetic */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="material-synthetic"
+                      checked={filters.materials.synthetic}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          materials: {
+                            ...filters.materials,
+                            synthetic: e.target.checked,
+                          },
+                        })
+                      }
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="material-synthetic"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Synthetic
+                    </label>
+                  </div>
+
+                  {/* Rubber & Foam */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="material-rubber-foam"
+                      checked={filters.materials.rubberFoam}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          materials: {
+                            ...filters.materials,
+                            rubberFoam: e.target.checked,
+                          },
+                        })
+                      }
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="material-rubber-foam"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Rubber & Foam
+                    </label>
+                  </div>
+
+                  {/* Specialty & Eco-Friendly */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="material-eco-friendly"
+                      checked={filters.materials.ecoFriendly}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          materials: {
+                            ...filters.materials,
+                            ecoFriendly: e.target.checked,
+                          },
+                        })
+                      }
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="material-eco-friendly"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Specialty & Eco-Friendly
+                    </label>
+                  </div>
+
+                  {/* Other */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="material-other"
+                      checked={filters.materials.other}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          materials: {
+                            ...filters.materials,
+                            other: e.target.checked,
+                          },
+                        })
+                      }
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="material-other"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Other
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price range filter - unchanged */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Price Range
@@ -172,6 +352,7 @@ function ShoeList() {
                 </div>
               </div>
 
+              {/* Clear filters - update to reset materials too */}
               <button
                 className="w-full bg-gray-100 text-gray-600 py-2 rounded-md hover:bg-gray-200"
                 onClick={() =>
@@ -180,6 +361,13 @@ function ShoeList() {
                     priceRange: null,
                     brand: "",
                     category: "",
+                    materials: {
+                      leather: false,
+                      synthetic: false,
+                      rubberFoam: false,
+                      ecoFriendly: false,
+                      other: false,
+                    },
                   })
                 }
               >

@@ -18,6 +18,7 @@ function ShoeDetails() {
     colors: [""],
     sizes: [""],
     status: "AVAILABLE",
+    materials: {} as Record<string, boolean>,
   });
 
   useEffect(() => {
@@ -35,6 +36,7 @@ function ShoeDetails() {
           colors: data.color || [],
           sizes: data.size || [],
           status: data.status || "AVAILABLE",
+          materials: data.material || {}, // Add material data
         });
       } catch (error) {
         console.error("Error loading shoe:", error);
@@ -57,10 +59,11 @@ function ShoeDetails() {
         brand: formData.brand,
         category: formData.category,
         description: formData.description,
-        price: parseInt(formData.price),
+        price: parseFloat(formData.price),
         color: formData.colors,
         size: formData.sizes,
         status: formData.status,
+        material: formData.materials, // Add materials to the update
       });
       setEditing(false);
       // Reload shoe data
@@ -166,6 +169,49 @@ function ShoeDetails() {
                         }
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Materials
+                      </label>
+                      <div className="space-y-2">
+                        {[
+                          { key: "leather", label: "Leather" },
+                          { key: "synthetic", label: "Synthetic" },
+                          { key: "rubberFoam", label: "Rubber & Foam" },
+                          {
+                            key: "ecoFriendly",
+                            label: "Specialty & Eco-Friendly",
+                          },
+                          { key: "other", label: "Other" },
+                        ].map((material) => (
+                          <div key={material.key} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`material-${material.key}`}
+                              checked={
+                                formData.materials[material.key] || false
+                              }
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  materials: {
+                                    ...formData.materials,
+                                    [material.key]: e.target.checked,
+                                  },
+                                })
+                              }
+                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            />
+                            <label
+                              htmlFor={`material-${material.key}`}
+                              className="ml-2 block text-sm text-gray-700"
+                            >
+                              {material.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
@@ -174,7 +220,8 @@ function ShoeDetails() {
                       <input
                         type="number"
                         required
-                        min="0"
+                        min="0.0"
+                        step={"0.01"}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                         value={formData.price}
                         onChange={(e) =>
@@ -302,6 +349,47 @@ function ShoeDetails() {
                   <div>
                     <h3 className="font-semibold mb-2">Category</h3>
                     <p className="text-gray-600">{shoe.category}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Materials</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {shoe.material &&
+                        Object.entries(shoe.material).map(([key, value]) => {
+                          // Only display true values
+                          if (value === true) {
+                            // Convert camelCase to readable format
+                            const materialName = key
+                              .replace(/([A-Z])/g, " $1") // Add space before capital letters
+                              .replace(/^./, (str) => str.toUpperCase()); // Capitalize first letter
+
+                            // Handle special case
+                            const displayName =
+                              key === "rubberFoam"
+                                ? "Rubber & Foam"
+                                : key === "ecoFriendly"
+                                ? "Specialty & Eco-Friendly"
+                                : materialName;
+
+                            return (
+                              <span
+                                key={key}
+                                className="px-3 py-1 bg-gray-100 rounded-full text-sm"
+                              >
+                                {displayName}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+                      {(!shoe.material ||
+                        Object.values(shoe.material).every(
+                          (v) => v !== true
+                        )) && (
+                        <span className="text-gray-500">
+                          No materials specified
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Status</h3>
