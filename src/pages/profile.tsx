@@ -54,6 +54,9 @@ function Profile() {
   const [showComments, setShowComments] = useState<Record<string, boolean>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  // Add new state for date filtering
+  const [dateFilter, setDateFilter] = useState("all");
+
   // Initialize page
   useEffect(() => {
     const initialize = async () => {
@@ -162,6 +165,39 @@ function Profile() {
     }));
   };
 
+  // Add a function to filter posts by date
+  const getFilteredPosts = () => {
+    if (dateFilter === "all") {
+      return posts;
+    }
+
+    const now = new Date();
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+    const weekStart = new Date(todayStart - 6 * 24 * 60 * 60 * 1000).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+    return posts.filter((post) => {
+      const postDate = new Date(post.created_at).getTime();
+      switch (dateFilter) {
+        case "today":
+          return postDate >= todayStart;
+        case "week":
+          return postDate >= weekStart;
+        case "month":
+          return postDate >= monthStart;
+        case "year":
+          return postDate >= yearStart;
+        default:
+          return true;
+      }
+    });
+  };
+
   if (loading) {
     return (
       <div className="bg-green-900 min-h-screen flex items-center justify-center">
@@ -225,15 +261,6 @@ function Profile() {
                     >
                       Save Changes
                     </button>
-                    <label className="bg-white p-2 rounded-full cursor-pointer shadow-md">
-                      <FiCamera className="text-green-700 text-xl" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleProfileImageChange}
-                      />
-                    </label>
                   </div>
                 ) : (
                   <button
@@ -306,6 +333,18 @@ function Profile() {
                           placeholder="City, Country"
                         />
                       </div>
+                      <div className="flex items-center justify-center font-poppins text-green-700 gap-4">
+                        <label className="bg-white p-2 rounded-full cursor-pointer shadow-md">
+                          <FiCamera className="text-green-700 text-xl" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleProfileImageChange}
+                          />
+                        </label>
+                        <p>Edit Profile</p>
+                      </div>
                     </div>
 
                     <div>
@@ -362,12 +401,66 @@ function Profile() {
           {/* User Posts Section */}
           <h2 className="text-2xl font-bold text-white mb-4">Your Posts</h2>
 
+          {/* Date Filter Buttons */}
+          <div className="mb-4">
+            <button
+              onClick={() => setDateFilter("all")}
+              className={`px-4 py-2 rounded-lg mr-2 ${
+                dateFilter === "all"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-600 border"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setDateFilter("today")}
+              className={`px-4 py-2 rounded-lg mr-2 ${
+                dateFilter === "today"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-600 border"
+              }`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setDateFilter("week")}
+              className={`px-4 py-2 rounded-lg mr-2 ${
+                dateFilter === "week"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-600 border"
+              }`}
+            >
+              This Week
+            </button>
+            <button
+              onClick={() => setDateFilter("month")}
+              className={`px-4 py-2 rounded-lg mr-2 ${
+                dateFilter === "month"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-600 border"
+              }`}
+            >
+              This Month
+            </button>
+            <button
+              onClick={() => setDateFilter("year")}
+              className={`px-4 py-2 rounded-lg ${
+                dateFilter === "year"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-600 border"
+              }`}
+            >
+              This Year
+            </button>
+          </div>
+
           <div className="space-y-6">
             {postsLoading ? (
               <div className="bg-white rounded-lg p-4 text-center">
                 Loading your posts...
               </div>
-            ) : posts.length === 0 ? (
+            ) : getFilteredPosts().length === 0 ? (
               <div className="bg-white rounded-lg p-6 text-center">
                 <p className="text-gray-600">
                   You haven't created any posts yet.
@@ -380,7 +473,7 @@ function Profile() {
                 </button>
               </div>
             ) : (
-              posts.map((post) => (
+              getFilteredPosts().map((post) => (
                 <div
                   key={post.id}
                   className="bg-white rounded-lg shadow-lg overflow-hidden"

@@ -32,11 +32,14 @@ function Signup() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate password match
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
+    // Validate contact number
     const contactError = validateContactNumber(contactNumber);
     if (contactError) {
       setContactNumberError(contactError);
@@ -53,11 +56,19 @@ function Signup() {
         email,
         contactNumber
       );
+
       if (response && response.response) {
         alert("Signup successful! Please log in.");
+        // Redirect to login page
+        navigate("/");
       }
     } catch (error: any) {
-      alert(error.message || "Signup failed");
+      // Display a specific error message
+      if (error.message.includes("already registered")) {
+        alert(error.message);
+      } else {
+        alert(error.message || "Signup failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

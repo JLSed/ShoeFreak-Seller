@@ -9,6 +9,7 @@ function ShoeDetails() {
   const [shoe, setShoe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showRelistConfirm, setShowRelistConfirm] = useState(false);
   const [formData, setFormData] = useState({
     shoeName: "",
     brand: "",
@@ -71,6 +72,25 @@ function ShoeDetails() {
       setShoe(updatedShoe);
     } catch (error) {
       console.error("Error updating shoe:", error);
+    }
+  };
+
+  // Update the handleRelistShoe function
+  const handleRelistShoe = async () => {
+    if (!id) return;
+
+    try {
+      await updateSneaker(id, {
+        ...shoe,
+        status: "AVAILABLE",
+      });
+
+      // Reload shoe data to update the UI
+      const updatedShoe = await fetchSneaker(id);
+      setShoe(updatedShoe);
+      setShowRelistConfirm(false);
+    } catch (error) {
+      console.error("Error relisting shoe:", error);
     }
   };
 
@@ -393,17 +413,29 @@ function ShoeDetails() {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Status</h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        shoe.status === "SOLD"
-                          ? "bg-red-100 text-red-800"
-                          : shoe.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {shoe.status || "AVAILABLE"}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          shoe.status === "SOLD"
+                            ? "bg-red-100 text-red-800"
+                            : shoe.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {shoe.status || "AVAILABLE"}
+                      </span>
+
+                      {/* Relist button - only shown for sold shoes */}
+                      {shoe.status === "SOLD" && (
+                        <button
+                          onClick={() => setShowRelistConfirm(true)}
+                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                        >
+                          Relist Shoe
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Available Colors</h3>
@@ -437,6 +469,33 @@ function ShoeDetails() {
           </div>
         </div>
       </main>
+
+      {/* Confirmation dialog */}
+      {showRelistConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-xl font-semibold mb-4">Relist Shoe</h3>
+            <p className="mb-4">
+              Are you sure you want to relist this shoe? The status will be
+              changed to "AVAILABLE".
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowRelistConfirm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRelistShoe}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

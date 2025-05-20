@@ -14,31 +14,65 @@ export async function signUp(
   email: string,
   contactNumber: string
 ) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-  if (error) return { response: false, message: error.message };
-
-  if (data.user?.id) {
-    const { data: userData, error: userError } = await supabase
+  try {
+    // First check if email already exists in the Users table
+    const { data: existingUsers, error: checkError } = await supabase
       .from("Users")
-      .insert([
-        {
-          user_id: data.user.id,
+      .select("email")
+      .eq("email", email)
+      .single();
+
+    if (checkError && checkError.code !== "PGRST116") {
+      // PGRST116 means no rows found, which is what we want
+      console.error("Error checking existing user:", checkError);
+      throw new Error("Error checking existing user");
+    }
+
+    // If user exists, throw an error
+    if (existingUsers) {
+      throw new Error(
+        "Email already registered. Please use a different email or login instead."
+      );
+    }
+
+    // If email doesn't exist, proceed with signup
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           first_name: firstName,
           last_name: lastName,
-          email: email,
-          contact_number: contactNumber,
-          address: address,
-          type: "SELLER",
         },
-      ]);
-    if (userError) return { response: false, message: userError.message };
-    return { response: true, auth_data: data, user_data: userData };
-  }
+      },
+    });
 
-  return { response: false, message: "User ID is undefined" };
+    if (error) throw error;
+
+    // After successful auth signup, insert user info into Users table
+    const { error: userError } = await supabase.from("Users").insert([
+      {
+        user_id: data.user!.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        address: address,
+        contact_number: contactNumber,
+      },
+    ]);
+
+    if (userError) {
+      // If there was an error inserting into Users table,
+      // we should ideally clean up the auth user that was created
+      console.error("Error creating user profile:", userError);
+      throw userError;
+    }
+
+    return { response: data };
+  } catch (error) {
+    console.error("Signup error:", error);
+    throw error;
+  }
 }
 
 // Sign out the current user
