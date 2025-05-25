@@ -8,7 +8,12 @@ function PublishSneaker() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [sellerId, setSellerId] = useState<string | null>(null);
-
+  const [serviceFees, setServiceFees] = useState<
+    Array<{
+      service_name: string;
+      service_price: number;
+    }>
+  >([]);
   const [formData, setFormData] = useState({
     shoeName: "",
     brand: "",
@@ -27,7 +32,28 @@ function PublishSneaker() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  useEffect(() => {
+    const fetchSellerId = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setSellerId(user?.id || null);
+    };
 
+    const fetchServiceFee = async () => {
+      const { data, error } = await supabase
+        .from("service_fee")
+        .select("service_name, service_price");
+
+      if (error) {
+        console.error("Error fetching service fees:", error);
+      } else if (data) {
+        setServiceFees(data);
+      }
+    };
+    fetchSellerId();
+    fetchServiceFee();
+  }, []);
   useEffect(() => {
     const fetchSellerId = async () => {
       const {
@@ -395,6 +421,92 @@ function PublishSneaker() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* Service Fee Notice */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-yellow-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Commission Fee
+                  </h3>
+                  {serviceFees.length > 0 ? (
+                    <div className="mt-1 text-sm text-yellow-700">
+                      <p>
+                        Please note that Shoe F.R.R.K will charge the following
+                        fixed fees for each sale:
+                      </p>
+                      <ul className="list-disc ml-5 mt-2">
+                        {serviceFees.map((fee, index) => (
+                          <li key={index}>
+                            <span className="font-medium">
+                              {fee.service_name}:
+                            </span>{" "}
+                            ₱{fee.service_price}
+                          </li>
+                        ))}
+                      </ul>
+                      {formData.price && (
+                        <div className="mt-3 p-2 bg-white rounded border border-yellow-200">
+                          <p className="font-medium">
+                            Estimated total for a ₱{formData.price} shoe:
+                          </p>
+                          <p className="mt-1">
+                            • Base Price:{" "}
+                            <span className="font-bold">₱{formData.price}</span>
+                          </p>
+                          {serviceFees.map((fee, index) => (
+                            <p className="mt-1" key={index}>
+                              • {fee.service_name}:{" "}
+                              <span className="font-bold">
+                                ₱{fee.service_price.toFixed(2)}
+                              </span>
+                            </p>
+                          ))}
+                          <p className="mt-2 pt-2 border-t border-yellow-100">
+                            • Customer pays:{" "}
+                            <span className="font-bold">
+                              ₱
+                              {(
+                                parseFloat(formData.price) +
+                                serviceFees.reduce(
+                                  (total, fee) => total + fee.service_price,
+                                  0
+                                )
+                              ).toFixed(2)}
+                            </span>
+                          </p>
+                          <p className="mt-1">
+                            • You receive:{" "}
+                            <span className="font-bold">
+                              ₱{parseFloat(formData.price).toFixed(2)}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-yellow-700">
+                      Please note that Shoe F.R.R.K will collect service fees
+                      from each sale. Fee details are being loaded...
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <button
