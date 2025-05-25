@@ -929,3 +929,208 @@ export const fetchUserPosts = async (userId: string) => {
 
   return transformedData;
 };
+
+// Add this to your src/lib/supabase.ts file
+export async function createNotification(
+  content: string,
+  notifiedBy: string,
+  notifiedFor: string,
+  shoeReference: string
+) {
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert([
+        {
+          content,
+          notified_by: notifiedBy,
+          notified_for: notifiedFor,
+          shoe_reference: shoeReference,
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+    return { data };
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return { error };
+  }
+}
+
+export async function recordSale(
+  shoeId: string,
+  sellerId: string,
+  buyerId: string,
+  salePrice: number
+) {
+  try {
+    const { data, error } = await supabase
+      .from("seller_sales")
+      .insert([
+        {
+          shoe_id: shoeId,
+          seller_id: sellerId,
+          buyer_id: buyerId,
+          sale_price: salePrice,
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+    return { data };
+  } catch (error) {
+    console.error("Error recording sale:", error);
+    return { error };
+  }
+}
+
+export async function getSellerProductAnalytics(sellerId: string) {
+  try {
+    // Get sales count for each shoe
+    const { data: salesData, error: salesError } = await supabase
+      .from("seller_sales")
+      .select("shoe_id, sale_price")
+      .eq("seller_id", sellerId);
+
+    if (salesError) throw salesError;
+
+    if (!salesData || salesData.length === 0) {
+      return {
+        bestSellers: [],
+        leastSellers: [],
+      };
+    }
+
+    // Count sales per shoe
+    const salesCount: Record<string, { count: number; total: number }> = {};
+
+    salesData.forEach((sale) => {
+      if (!salesCount[sale.shoe_id]) {
+        salesCount[sale.shoe_id] = { count: 0, total: 0 };
+      }
+      salesCount[sale.shoe_id].count += 1;
+      salesCount[sale.shoe_id].total += parseFloat(sale.sale_price);
+    });
+
+    // Get shoe details for all sold shoes
+    const shoeIds = Object.keys(salesCount);
+
+    if (shoeIds.length === 0) {
+      return {
+        bestSellers: [],
+        leastSellers: [],
+      };
+    }
+
+    const { data: shoeDetails, error: shoeError } = await supabase
+      .from("Shoes")
+      .select("shoe_id, shoe_name, brand, image_url, price")
+      .in("shoe_id", shoeIds);
+
+    if (shoeError) throw shoeError;
+
+    if (!shoeDetails) {
+      return {
+        bestSellers: [],
+        leastSellers: [],
+      };
+    }
+
+    // Combine shoe details with sales data
+    const combinedData = shoeDetails.map((shoe) => ({
+      ...shoe,
+      salesCount: salesCount[shoe.shoe_id].count,
+      totalRevenue: salesCount[shoe.shoe_id].total,
+    }));
+
+    // Sort by sales count
+    const sortedBySales = [...combinedData].sort(
+      (a, b) => b.salesCount - a.salesCount
+    );
+
+    // Get top 5 best sellers and bottom 5 least sellers
+    const bestSellers = sortedBySales.slice(0, 5);
+    const leastSellers = [...sortedBySales]
+      .sort((a, b) => a.salesCount - b.salesCount)
+      .slice(0, 5);
+
+    return {
+      bestSellers,
+      leastSellers,
+    };
+  } catch (error) {
+    console.error("Error fetching product analytics:", error);
+    return {
+      bestSellers: [],
+      leastSellers: [],
+    };
+  }
+}
+
+/**
+ * Fetches loyal customers data for a seller
+ */
+export async function getSellerCustomerAnalytics(sellerId: string) {
+  try {
+    // Get all sales with customer info
+    const { data: salesData, error: salesError } = await supabase
+      .from("seller_sales")
+      .select("buyer_id, sale_price")
+      .eq("seller_id", sellerId);
+
+    if (salesError) throw salesError;
+
+    if (!salesData || salesData.length === 0) {
+      return { loyalCustomers: [] };
+    }
+
+    // Count purchases per customer
+    const customerPurchases: Record<string, { count: number; total: number }> =
+      {};
+
+    salesData.forEach((sale) => {
+      if (!customerPurchases[sale.buyer_id]) {
+        customerPurchases[sale.buyer_id] = { count: 0, total: 0 };
+      }
+      customerPurchases[sale.buyer_id].count += 1;
+      customerPurchases[sale.buyer_id].total += parseFloat(sale.sale_price);
+    });
+
+    // Get customer details
+    const customerIds = Object.keys(customerPurchases);
+
+    if (customerIds.length === 0) {
+      return { loyalCustomers: [] };
+    }
+
+    const { data: customerDetails, error: customerError } = await supabase
+      .from("Users")
+      .select("user_id, first_name, last_name, email, photo_url")
+      .in("user_id", customerIds);
+
+    if (customerError) throw customerError;
+
+    if (!customerDetails) {
+      return { loyalCustomers: [] };
+    }
+
+    // Combine customer details with purchase data
+    const combinedData = customerDetails.map((customer) => ({
+      ...customer,
+      purchaseCount: customerPurchases[customer.user_id].count,
+      totalSpent: customerPurchases[customer.user_id].total,
+    }));
+
+    // Sort by purchase count to get loyal customers
+    const loyalCustomers = combinedData
+      .sort((a, b) => b.purchaseCount - a.purchaseCount)
+      .slice(0, 5);
+
+    return { loyalCustomers };
+  } catch (error) {
+    console.error("Error fetching customer analytics:", error);
+    return { loyalCustomers: [] };
+  }
+}

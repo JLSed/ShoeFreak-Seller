@@ -4,8 +4,10 @@ import Header from "../components/header";
 import {
   fetchOrder,
   getCurrentUser,
+  createNotification,
   completeOrder,
   cancelOrder,
+  recordSale,
 } from "../lib/supabase";
 import { IoMdArrowBack } from "react-icons/io";
 import { BsChatDots } from "react-icons/bs";
@@ -52,11 +54,33 @@ function OrderDetails() {
     if (!order) return;
     setUpdateLoading(true);
     try {
+      // First complete the order
       const result = await completeOrder(order.checkout_id, order.shoe.shoe_id);
       if (result.error) {
         console.error("Error completing order:", result.error);
         return;
       }
+
+      // Create a notification for the buyer
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        // Add notification
+        await createNotification(
+          `Your order for ${order.shoe.shoe_name} has been completed and is ready for shipping.`,
+          currentUser.id,
+          order.buyer.user_id,
+          order.shoe.shoe_id
+        );
+
+        // Record the sale
+        await recordSale(
+          order.shoe.shoe_id,
+          currentUser.id,
+          order.buyer.user_id,
+          order.shoe.price
+        );
+      }
+
       // Reload order data
       const updatedOrder = await fetchOrder(order.checkout_id);
       setOrder(updatedOrder);
@@ -64,6 +88,7 @@ function OrderDetails() {
       console.error("Error completing order:", error);
     } finally {
       setUpdateLoading(false);
+      setIsConfirmingComplete(false);
     }
   };
 
@@ -71,11 +96,24 @@ function OrderDetails() {
     if (!order) return;
     setUpdateLoading(true);
     try {
+      // First cancel the order
       const result = await cancelOrder(order.checkout_id);
       if (result.error) {
         console.error("Error cancelling order:", result.error);
         return;
       }
+
+      // Create a notification about the cancellation
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        await createNotification(
+          `Order for ${order.shoe.shoe_name} has been cancelled by the seller.`,
+          currentUser.id,
+          order.buyer.user_id,
+          order.shoe.shoe_id
+        );
+      }
+
       // Reload order data
       const updatedOrder = await fetchOrder(order.checkout_id);
       setOrder(updatedOrder);
