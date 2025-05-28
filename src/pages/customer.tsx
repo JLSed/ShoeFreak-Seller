@@ -130,7 +130,7 @@ function Customer() {
         {/* Customer List */}
         <aside className="bg-gray-100 p-4 rounded-lg shadow-lg w-80">
           <h2 className="text-lg font-semibold text-green-900 mb-4">
-            Customers
+            Messages
           </h2>
           {loading.customers ? (
             <p className="text-gray-500">Loading customers...</p>
@@ -232,7 +232,7 @@ function Customer() {
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Select a customer to start chatting
+              Select a contact to start chatting
             </div>
           )}
         </div>
