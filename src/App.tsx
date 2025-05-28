@@ -18,25 +18,33 @@ import Profile from "./pages/profile";
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/account-verify" element={<AccountVerifiedPage />} />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/account-verify" element={<AccountVerifiedPage />} />
 
-          <Route path="/home" element={<Home />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/messages" element={<Customer />} />
-          <Route path="/publish-sneaker" element={<PublishSneaker />} />
-          <Route path="/shoe-list" element={<ShoeList />} />
-          <Route path="/shoe/:id" element={<ShoeDetails />} />
-          <Route path="/order/:id" element={<OrderDetails />} />
-          <Route path="/socialmedia" element={<SocialMedia />} />
-          <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/*"
+          element={
+            <AuthProvider>
+              <Routes>
+                <Route path="home" element={<Home />} />
+                <Route path="marketplace" element={<Marketplace />} />
+                <Route path="messages" element={<Customer />} />
+                <Route path="publish-sneaker" element={<PublishSneaker />} />
+                <Route path="shoe-list" element={<ShoeList />} />
+                <Route path="shoe/:id" element={<ShoeDetails />} />
+                <Route path="order/:id" element={<OrderDetails />} />
+                <Route path="socialmedia" element={<SocialMedia />} />
+                <Route path="profile" element={<Profile />} />
+              </Routes>
+            </AuthProvider>
+          }
+        />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AuthProvider>
+        {/* 404 page */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </BrowserRouter>
   );
 }
