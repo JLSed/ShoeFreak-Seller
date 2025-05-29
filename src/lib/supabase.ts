@@ -187,8 +187,7 @@ export async function fetchCustomersWithChat(sellerId: string) {
   const { data: customers, error: customerError } = await supabase
     .from("Users")
     .select("user_id, first_name, last_name, email")
-    .in("user_id", customerIds)
-    .eq("type", "CUSTOMER");
+    .in("user_id", customerIds);
 
   if (customerError) throw customerError;
 

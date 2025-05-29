@@ -84,13 +84,13 @@ function PublishSneaker() {
     setFormData({ ...formData, sizes: newSizes });
   };
 
-  const addColorField = () => {
-    setFormData({ ...formData, colors: [...formData.colors, ""] });
-  };
+  // const addColorField = () => {
+  //   setFormData({ ...formData, colors: [...formData.colors, ""] });
+  // };
 
-  const addSizeField = () => {
-    setFormData({ ...formData, sizes: [...formData.sizes, ""] });
-  };
+  // const addSizeField = () => {
+  //   setFormData({ ...formData, sizes: [...formData.sizes, ""] });
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -362,15 +362,6 @@ function PublishSneaker() {
                     onChange={(e) => handleColorChange(index, e.target.value)}
                     placeholder="Enter color (e.g., red, #FF0000)"
                   />
-                  {index === formData.colors.length - 1 && (
-                    <button
-                      type="button"
-                      onClick={addColorField}
-                      className="px-3 py-1 bg-green-600 text-white rounded-md"
-                    >
-                      +
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
@@ -388,15 +379,6 @@ function PublishSneaker() {
                     onChange={(e) => handleSizeChange(index, e.target.value)}
                     placeholder="Enter size (e.g., 9, 42, M)"
                   />
-                  {index === formData.sizes.length - 1 && (
-                    <button
-                      type="button"
-                      onClick={addSizeField}
-                      className="px-3 py-1 bg-green-600 text-white rounded-md"
-                    >
-                      +
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
