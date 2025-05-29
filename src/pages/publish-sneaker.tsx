@@ -351,7 +351,7 @@ function PublishSneaker() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Colors
+                Color
               </label>
               {formData.colors.map((color, index) => (
                 <div key={index} className="flex gap-2 mt-2">
@@ -368,7 +368,7 @@ function PublishSneaker() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Sizes
+                Size
               </label>
               {formData.sizes.map((size, index) => (
                 <div key={index} className="flex gap-2 mt-2">
